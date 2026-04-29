@@ -1,28 +1,19 @@
 const express = require("express");
 const cors = require("cors");
 const bcrypt = require("bcryptjs");
-const Database = require("better-sqlite3");
+const { MongoClient } = require("mongodb");
 
 const app = express();
 const port = 5000;
-const db = new Database("app.db");
+
+const mongoUrl = "mongodb://127.0.0.1:27017";
+const dbName = "registerFormDb";
+
+let db;
+let usersCollection;
 
 app.use(cors());
 app.use(express.json());
-
-db.prepare(`
-  CREATE TABLE IF NOT EXISTS users (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    fullName TEXT NOT NULL,
-    email TEXT NOT NULL UNIQUE,
-    passwordHash TEXT NOT NULL,
-    course TEXT NOT NULL,
-    dateOfBirth TEXT NOT NULL,
-    gender TEXT NOT NULL,
-    acceptTerms INTEGER NOT NULL,
-    createdAt TEXT NOT NULL
-  )
-`).run();
 
 const validateUser = (data) => {
   const errors = {};
@@ -68,6 +59,19 @@ const validateUser = (data) => {
   return errors;
 };
 
+const connectToMongoDb = async () => {
+  const client = new MongoClient(mongoUrl);
+
+  await client.connect();
+
+  db = client.db(dbName);
+  usersCollection = db.collection("users");
+
+  await usersCollection.createIndex({ email: 1 }, { unique: true });
+
+  console.log("Connected to MongoDB");
+};
+
 app.post("/api/users", async (req, res) => {
   try {
     const errors = validateUser(req.body);
@@ -81,9 +85,9 @@ app.post("/api/users", async (req, res) => {
 
     const normalizedEmail = req.body.email.trim().toLowerCase();
 
-    const existingUser = db
-      .prepare("SELECT id FROM users WHERE email = ?")
-      .get(normalizedEmail);
+    const existingUser = await usersCollection.findOne({
+      email: normalizedEmail,
+    });
 
     if (existingUser) {
       return res.status(409).json({
@@ -96,62 +100,76 @@ app.post("/api/users", async (req, res) => {
 
     const passwordHash = await bcrypt.hash(req.body.password, 10);
 
-    const result = db
-      .prepare(`
-        INSERT INTO users (
-          fullName,
-          email,
-          passwordHash,
-          course,
-          dateOfBirth,
-          gender,
-          acceptTerms,
-          createdAt
-        )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-      `)
-      .run(
-        req.body.fullName.trim(),
-        normalizedEmail,
-        passwordHash,
-        req.body.course,
-        req.body.dateOfBirth,
-        req.body.gender,
-        req.body.acceptTerms ? 1 : 0,
-        new Date().toISOString()
-      );
+    const newUser = {
+      fullName: req.body.fullName.trim(),
+      email: normalizedEmail,
+      passwordHash,
+      course: req.body.course,
+      dateOfBirth: req.body.dateOfBirth,
+      gender: req.body.gender,
+      acceptTerms: Boolean(req.body.acceptTerms),
+      createdAt: new Date().toISOString(),
+    };
+
+    const result = await usersCollection.insertOne(newUser);
 
     return res.status(201).json({
       message: "User created successfully",
-      userId: result.lastInsertRowid,
+      userId: result.insertedId,
     });
   } catch (error) {
+    if (error.code === 11000) {
+      return res.status(409).json({
+        message: "Email already exists",
+        errors: {
+          email: "Email already exists",
+        },
+      });
+    }
+
+    console.error(error);
+
     return res.status(500).json({
       message: "Something went wrong",
     });
   }
 });
 
-app.get("/api/users", (req, res) => {
-  const users = db
-    .prepare(`
-      SELECT
-        id,
-        fullName,
-        email,
-        course,
-        dateOfBirth,
-        gender,
-        acceptTerms,
-        createdAt
-      FROM users
-      ORDER BY id DESC
-    `)
-    .all();
+app.get("/api/users", async (req, res) => {
+  try {
+    const users = await usersCollection
+      .find(
+        {},
+        {
+          projection: {
+            passwordHash: 0,
+          },
+        }
+      )
+      .sort({ createdAt: -1 })
+      .toArray();
 
-  return res.status(200).json(users);
+    return res.status(200).json(users);
+  } catch (error) {
+    console.error(error);
+
+    return res.status(500).json({
+      message: "Something went wrong",
+    });
+  }
 });
 
-app.listen(port, () => {
-  console.log(`Server running on http://localhost:${port}`);
-});
+const startServer = async () => {
+  try {
+    await connectToMongoDb();
+
+    app.listen(port, () => {
+      console.log(`Server running on http://localhost:${port}`);
+    });
+  } catch (error) {
+    console.error("Failed to start server:", error);
+    process.exit(1);
+  }
+};
+
+startServer();
