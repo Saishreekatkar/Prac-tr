@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
 
 type FormData = {
@@ -12,11 +12,7 @@ type FormData = {
   acceptTerms: boolean;
 };
 
-type SavedFormData = Omit<FormData, "password" | "confirmPassword">;
-
 type FormErrors = Partial<Record<keyof FormData, string>>;
-
-const localStorageKey = "userFormDraft";
 
 const initialFormData: FormData = {
   fullName: "",
@@ -29,62 +25,11 @@ const initialFormData: FormData = {
   acceptTerms: false,
 };
 
-const getInitialFormData = (): FormData => {
-  const savedData = localStorage.getItem(localStorageKey);
-
-  if (!savedData) {
-    return initialFormData;
-  }
-
-  try {
-    const parsedData = JSON.parse(savedData) as SavedFormData;
-
-    return {
-      ...initialFormData,
-      ...parsedData,
-      password: "",
-      confirmPassword: "",
-    };
-  } catch {
-    return initialFormData;
-  }
-};
-
-const hashPassword = async (password: string) => {
-  const encoder = new TextEncoder();
-  const passwordData = encoder.encode(password);
-  const hashBuffer = await crypto.subtle.digest("SHA-256", passwordData);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-
-  return hashArray
-    .map((byte) => byte.toString(16).padStart(2, "0"))
-    .join("");
-};
-
 function UserForm() {
-  const [formData, setFormData] = useState<FormData>(getInitialFormData);
+  const [formData, setFormData] = useState<FormData>(initialFormData);
   const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitted, setIsSubmitted] = useState(false);
-
-  useEffect(() => {
-    const dataToSave: SavedFormData = {
-      fullName: formData.fullName,
-      email: formData.email,
-      course: formData.course,
-      dateOfBirth: formData.dateOfBirth,
-      gender: formData.gender,
-      acceptTerms: formData.acceptTerms,
-    };
-
-    localStorage.setItem(localStorageKey, JSON.stringify(dataToSave));
-  }, [
-    formData.fullName,
-    formData.email,
-    formData.course,
-    formData.dateOfBirth,
-    formData.gender,
-    formData.acceptTerms,
-  ]);
+  const [apiMessage, setApiMessage] = useState("");
 
   const handleChange = (
     event: ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -159,21 +104,43 @@ function UserForm() {
 
     setErrors(validationErrors);
     setIsSubmitted(false);
+    setApiMessage("");
 
-    if (Object.keys(validationErrors).length === 0) {
-      await hashPassword(formData.password);
+    if (Object.keys(validationErrors).length > 0) {
+      return;
+    }
 
-      localStorage.removeItem(localStorageKey);
+    try {
+      const response = await fetch("http://localhost:5000/api/users", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        setErrors(result.errors || {});
+        setApiMessage(result.message || "Something went wrong");
+        return;
+      }
+
       setFormData(initialFormData);
+      setErrors({});
       setIsSubmitted(true);
+      setApiMessage(result.message || "User created successfully");
+    } catch {
+      setApiMessage("Backend server is not running");
     }
   };
 
-  const clearSavedDraft = () => {
-    localStorage.removeItem(localStorageKey);
+  const clearForm = () => {
     setFormData(initialFormData);
     setErrors({});
     setIsSubmitted(false);
+    setApiMessage("");
   };
 
   return (
@@ -185,9 +152,15 @@ function UserForm() {
           Register for consultation
         </p>
 
-        {isSubmitted && (
-          <div className="mt-5 border border-gray-300 bg-gray-100 px-4 py-3 text-sm font-medium text-gray-700">
-            Form submitted successfully!
+        {apiMessage && (
+          <div
+            className={`mt-5 border px-4 py-3 text-sm font-medium ${
+              isSubmitted
+                ? "border-gray-300 bg-gray-100 text-gray-700"
+                : "border-red-300 bg-red-50 text-red-700"
+            }`}
+          >
+            {apiMessage}
           </div>
         )}
 
@@ -374,7 +347,7 @@ function UserForm() {
 
           <button
             type="button"
-            onClick={clearSavedDraft}
+            onClick={clearForm}
             className="w-full border border-gray-400 bg-gray-50 px-4 py-3 font-semibold text-gray-800 hover:bg-gray-200"
           >
             Clear
