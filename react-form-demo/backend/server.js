@@ -1,18 +1,27 @@
+require("dotenv").config();
+
 const express = require("express");
 const cors = require("cors");
 const bcrypt = require("bcryptjs");
 const { MongoClient } = require("mongodb");
 
 const app = express();
-const port = 5000;
 
-const mongoUrl = "mongodb://127.0.0.1:27017";
-const dbName = "registerFormDb";
+const port = process.env.PORT || 5000;
+const mongoUrl = process.env.MONGO_URL || "mongodb://127.0.0.1:27017";
+const dbName = process.env.MONGO_DB_NAME || "registerFormDb";
+const clientUrl = process.env.CLIENT_URL || "http://localhost:5173";
+const bcryptSaltRounds = Number(process.env.BCRYPT_SALT_ROUNDS || 10);
 
 let db;
 let usersCollection;
 
-app.use(cors());
+app.use(
+  cors({
+    origin: clientUrl,
+  })
+);
+
 app.use(express.json());
 
 const validateUser = (data) => {
@@ -69,7 +78,7 @@ const connectToMongoDb = async () => {
 
   await usersCollection.createIndex({ email: 1 }, { unique: true });
 
-  console.log("Connected to MongoDB");
+  console.log(`Connected to MongoDB database: ${dbName}`);
 };
 
 app.post("/api/users", async (req, res) => {
@@ -98,7 +107,10 @@ app.post("/api/users", async (req, res) => {
       });
     }
 
-    const passwordHash = await bcrypt.hash(req.body.password, 10);
+    const passwordHash = await bcrypt.hash(
+      req.body.password,
+      bcryptSaltRounds
+    );
 
     const newUser = {
       fullName: req.body.fullName.trim(),
