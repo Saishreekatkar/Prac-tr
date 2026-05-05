@@ -11,12 +11,14 @@ import ErrorMessage from "./components/ErrorMessage";
 import TodoList from "./components/TodoList";
 
 function App() {
+  // State for todo data, form input, edit mode, and errors
   const [todos, setTodos] = useState([]);
   const [title, setTitle] = useState("");
   const [editingId, setEditingId] = useState(null);
   const [editingTitle, setEditingTitle] = useState("");
   const [error, setError] = useState("");
 
+  // Load todos from backend when page opens
   const fetchTodos = async () => {
     try {
       const data = await getTodos();
@@ -30,6 +32,7 @@ function App() {
     fetchTodos();
   }, []);
 
+  // Handles add, update, edit, cancel, and delete actions
   const handleAddTodo = async (event) => {
     event.preventDefault();
 
@@ -79,9 +82,7 @@ function App() {
         title: editingTitle,
       });
 
-      setTodos(
-        todos.map((todo) => (todo._id === id ? updatedTodo : todo))
-      );
+      setTodos(todos.map((todo) => (todo._id === id ? updatedTodo : todo)));
 
       setEditingId(null);
       setEditingTitle("");
@@ -111,6 +112,7 @@ function App() {
           Todo List
         </h1>
 
+        {/* Reusable components for form, error, and todo list */}
         <TodoForm
           title={title}
           setTitle={setTitle}

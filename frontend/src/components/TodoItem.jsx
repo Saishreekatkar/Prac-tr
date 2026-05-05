@@ -9,11 +9,13 @@ function TodoItem({
   onCancelEdit,
   onDelete,
 }) {
+  // Checks whether this row is currently in edit mode
   const isEditing = editingId === todo._id;
 
   return (
     <div className="flex items-center justify-between rounded border border-gray-200 px-3 py-2">
       {isEditing ? (
+        // Edit mode UI
         <div className="flex w-full gap-2">
           <input
             type="text"
@@ -37,6 +39,7 @@ function TodoItem({
           </button>
         </div>
       ) : (
+        // Normal row UI
         <>
           <div className="flex items-center gap-2">
             <input

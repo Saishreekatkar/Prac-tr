@@ -12,12 +12,14 @@ function TodoList({
   onCancelEdit,
   onDelete,
 }) {
+  // Show empty message when there are no todos
   if (todos.length === 0) {
     return <EmptyState />;
   }
 
   return (
     <div className="space-y-2">
+      {/* Loop through todos and create one TodoItem for each todo */}
       {todos.map((todo) => (
         <TodoItem
           key={todo._id}
