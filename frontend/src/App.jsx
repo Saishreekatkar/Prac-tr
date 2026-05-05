@@ -6,6 +6,10 @@ import {
   updateTodo,
 } from "./api/todoApi";
 
+import TodoForm from "./components/TodoForm";
+import ErrorMessage from "./components/ErrorMessage";
+import TodoList from "./components/TodoList";
+
 function App() {
   const [todos, setTodos] = useState([]);
   const [title, setTitle] = useState("");
@@ -19,7 +23,6 @@ function App() {
       setTodos(data);
     } catch (error) {
       setError("Could not load todos");
-      console.error(error);
     }
   };
 
@@ -42,7 +45,6 @@ function App() {
       setTitle("");
     } catch (error) {
       setError("Could not add todo");
-      console.error(error);
     }
   };
 
@@ -57,7 +59,6 @@ function App() {
       );
     } catch (error) {
       setError("Could not update todo");
-      console.error(error);
     }
   };
 
@@ -86,7 +87,6 @@ function App() {
       setEditingTitle("");
     } catch (error) {
       setError("Could not save todo");
-      console.error(error);
     }
   };
 
@@ -101,7 +101,6 @@ function App() {
       setTodos(todos.filter((todo) => todo._id !== id));
     } catch (error) {
       setError("Could not delete todo");
-      console.error(error);
     }
   };
 
@@ -112,108 +111,25 @@ function App() {
           Todo List
         </h1>
 
-        
+        <TodoForm
+          title={title}
+          setTitle={setTitle}
+          onAddTodo={handleAddTodo}
+        />
 
-        <form onSubmit={handleAddTodo} className="mb-4 flex gap-2">
-          <input
-            type="text"
-            placeholder="enter task"
-            value={title}
-            onChange={(event) => setTitle(event.target.value)}
-            className="flex-1 rounded border border-gray-300 px-3 py-2 outline-none focus:border-blue-500"
-          />
+        <ErrorMessage message={error} />
 
-          <button
-            type="submit"
-            className="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
-          >
-            Add
-          </button>
-        </form>
-
-        {error && (
-          <p className="mb-4 rounded bg-red-100 px-3 py-2 text-sm text-red-700">
-            {error}
-          </p>
-        )}
-
-        <div className="space-y-2">
-          {todos.length === 0 ? (
-            <p className="py-6 text-center text-gray-500">
-              No todos found.
-            </p>
-          ) : (
-            todos.map((todo) => (
-              <div
-                key={todo._id}
-                className="flex items-center justify-between rounded border border-gray-200 px-3 py-2"
-              >
-                {editingId === todo._id ? (
-                  <div className="flex w-full gap-2">
-                    <input
-                      type="text"
-                      value={editingTitle}
-                      onChange={(event) =>
-                        setEditingTitle(event.target.value)
-                      }
-                      className="flex-1 rounded border border-gray-300 px-2 py-1 outline-none focus:border-blue-500"
-                    />
-
-                    <button
-                      onClick={() => handleSaveEdit(todo._id)}
-                      className="rounded bg-green-600 px-3 py-1 text-sm text-white hover:bg-green-700"
-                    >
-                      Save
-                    </button>
-
-                    <button
-                      onClick={handleCancelEdit}
-                      className="rounded bg-gray-300 px-3 py-1 text-sm text-gray-800 hover:bg-gray-400"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                ) : (
-                  <>
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        checked={todo.isCompleted}
-                        onChange={() => handleComplete(todo)}
-                      />
-
-                      <span
-                        className={
-                          todo.isCompleted
-                            ? "text-gray-400 line-through"
-                            : "text-gray-800"
-                        }
-                      >
-                        {todo.title}
-                      </span>
-                    </div>
-
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => handleEditClick(todo)}
-                        className="text-sm text-blue-600 hover:underline"
-                      >
-                        Edit
-                      </button>
-
-                      <button
-                        onClick={() => handleDelete(todo._id)}
-                        className="text-sm text-red-600 hover:underline"
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </>
-                )}
-              </div>
-            ))
-          )}
-        </div>
+        <TodoList
+          todos={todos}
+          editingId={editingId}
+          editingTitle={editingTitle}
+          setEditingTitle={setEditingTitle}
+          onComplete={handleComplete}
+          onEditClick={handleEditClick}
+          onSaveEdit={handleSaveEdit}
+          onCancelEdit={handleCancelEdit}
+          onDelete={handleDelete}
+        />
       </div>
     </main>
   );
