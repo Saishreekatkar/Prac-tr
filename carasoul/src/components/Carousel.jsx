@@ -8,30 +8,50 @@ export default function Carousel({ images }) {
   }
 
   const prevSlide = () => {
-    setCurrent((prev) => (prev === 0 ? images.length - 1 : prev - 1));
+    setCurrent((prev) => {
+      if (prev === 0) {
+        return images.length - 1;
+      } else {
+        return prev - 1;
+      }
+    });
   };
 
   const nextSlide = () => {
-    setCurrent((prev) => (prev === images.length - 1 ? 0 : prev + 1));
+    setCurrent((prev) => {
+      if (prev === images.length - 1) {
+        return 0;
+      } else {
+        return prev + 1;
+      }
+    });
   };
 
   const getSlideStyle = (index) => {
-    const prevIndex = current === 0 ? images.length - 1 : current - 1;
-    const nextIndex = current === images.length - 1 ? 0 : current + 1;
+    let prevIndex;
+    let nextIndex;
+
+    if (current === 0) {
+      prevIndex = images.length - 1;
+    } else {
+      prevIndex = current - 1;
+    }
+
+    if (current === images.length - 1) {
+      nextIndex = 0;
+    } else {
+      nextIndex = current + 1;
+    }
 
     if (index === current) {
       return "translate-x-[-50%] scale-100 opacity-100 z-30";
-    }
-
-    if (index === prevIndex) {
+    } else if (index === prevIndex) {
       return "translate-x-[-105%] scale-[0.85] opacity-50 z-20";
-    }
-
-    if (index === nextIndex) {
+    } else if (index === nextIndex) {
       return "translate-x-[5%] scale-[0.85] opacity-50 z-20";
+    } else {
+      return "translate-x-[-50%] scale-75 opacity-0 z-10 pointer-events-none";
     }
-
-    return "translate-x-[-50%] scale-75 opacity-0 z-10 pointer-events-none";
   };
 
   return (
@@ -64,15 +84,7 @@ export default function Carousel({ images }) {
       </div>
 
       <div className="mt-5 flex justify-center gap-3">
-        {images.map((_, index) => (
-          <button
-            key={index}
-            onClick={() => setCurrent(index)}
-            className={`h-3 w-3 rounded-full transition ${
-              index === current ? "bg-gray-900" : "bg-gray-300"
-            }`}
-          ></button>
-        ))}
+        
       </div>
     </div>
   );
