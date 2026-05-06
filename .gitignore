@@ -1,3 +1,10 @@
+# dependencies
+node_modules/
+
+# env files
+.env
+backend/.env
 react-form-demo/backend/.env
-react-form-demo/backend/package-lock.json
-react-form-demo/backend/package.json
+
+# optional
+package-lock.json
