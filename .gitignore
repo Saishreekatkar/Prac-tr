@@ -24,3 +24,11 @@ pnpm-debug.log*
 .DS_Store
 .vscode/
 .idea/
+
+# env files
+.env
+backend/.env
+react-form-demo/backend/.env
+
+# optional
+package-lock.json
