@@ -1,7 +1,7 @@
 import Carousel from "./components/Carousel";
 import HorizontalCarousel from "./components/HorizontalCarousel";
 import ProductCarousel from "./components/ProductCarousel";
-
+import ScrollingCarousel from "./components/ScrollingCarousel";
 
 const carouselImages = [
   "https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?w=800&h=400&fit=crop",
@@ -74,7 +74,7 @@ function App() {
       <Carousel images={carouselImages} />
 
       <HorizontalCarousel images={carouselImages} />
-
+    <ScrollingCarousel images={carouselImages}></ScrollingCarousel>
       <ProductCarousel products={products} />
     </div>
   );

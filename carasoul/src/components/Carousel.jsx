@@ -1,7 +1,23 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export default function Carousel({ images }) {
   const [current, setCurrent] = useState(0);
+
+  useEffect(() => {
+    if (!images || images.length === 0) return;
+
+    const intervalId = setInterval(() => {
+      setCurrent((prev) => {
+        if (prev === images.length - 1) {
+          return 0;
+        } else {
+          return prev + 1;
+        }
+      });
+    }, 5000);
+
+    return () => clearInterval(intervalId);
+  }, [images]);
 
   if (!images || images.length === 0) {
     return <p className="text-center text-gray-500">No images found.</p>;
@@ -84,7 +100,15 @@ export default function Carousel({ images }) {
       </div>
 
       <div className="mt-5 flex justify-center gap-3">
-        
+        {images.map((_, index) => (
+          <button
+            key={index}
+            onClick={() => setCurrent(index)}
+            className={`h-3 w-3 rounded-full transition ${
+              index === current ? "bg-gray-900" : "bg-gray-300"
+            }`}
+          ></button>
+        ))}
       </div>
     </div>
   );
