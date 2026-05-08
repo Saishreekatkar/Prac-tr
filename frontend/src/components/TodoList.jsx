@@ -1,6 +1,7 @@
 import { useState } from "react";
 import EmptyState from "./EmptyState";
 import TodoItem from "./Todoitem";
+import Modal from "./Modal";
 
 function TodoList({
   todos,
@@ -14,6 +15,7 @@ function TodoList({
   onDelete,
 }) {
   const [currentPage, setCurrentPage] = useState(1);
+  const [todoToDelete, setTodoToDelete] = useState(null);
 
   const todosPerPage = 3;
 
@@ -23,6 +25,19 @@ function TodoList({
   const currentTodos = todos.slice(firstTodoIndex, lastTodoIndex);
 
   const totalPages = Math.ceil(todos.length / todosPerPage);
+
+  const openDeleteModal = (todoId) => {
+    setTodoToDelete(todoId);
+  };
+
+  const closeDeleteModal = () => {
+    setTodoToDelete(null);
+  };
+
+  const confirmDelete = () => {
+    onDelete(todoToDelete);
+    setTodoToDelete(null);
+  };
 
   if (todos.length === 0) {
     return <EmptyState />;
@@ -42,7 +57,7 @@ function TodoList({
             onEditClick={onEditClick}
             onSaveEdit={onSaveEdit}
             onCancelEdit={onCancelEdit}
-            onDelete={onDelete}
+            onDelete={openDeleteModal}
           />
         ))}
       </div>
@@ -70,6 +85,32 @@ function TodoList({
           </button>
         </div>
       )}
+
+      <Modal
+        isOpen={todoToDelete !== null}
+        title="Delete Todo"
+        onClose={closeDeleteModal}
+      >
+        <p className="mb-6 text-gray-600">
+          Are you sure you want to delete this todo?
+        </p>
+
+        <div className="flex justify-end gap-3">
+          <button
+            onClick={closeDeleteModal}
+            className="rounded bg-gray-200 px-4 py-2 text-sm text-gray-700 hover:bg-gray-300"
+          >
+            Cancel
+          </button>
+
+          <button
+            onClick={confirmDelete}
+            className="rounded bg-red-600 px-4 py-2 text-sm text-white hover:bg-red-700"
+          >
+            Delete
+          </button>
+        </div>
+      </Modal>
     </div>
   );
 }
