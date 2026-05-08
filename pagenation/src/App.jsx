@@ -1,6 +1,6 @@
 import { useState } from "react";
 import Pagination from "./components/Pagination";
-
+import KeyExample from "./components/KeyExample";
 function App() {
   const data = [
     " Apple",
@@ -31,6 +31,9 @@ function App() {
   return (
     <div className="min-h-screen bg-slate-100 p-10">
      
+    <div>
+      <KeyExample />
+    </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
         {currentItems.map((item, index) => (
